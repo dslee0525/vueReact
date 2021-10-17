@@ -314,3 +314,278 @@
 </body>
 </html>
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.js">
+    /* 자바스크립트로 컴파일러. ES6-->ES5, JSX-->ES5 */
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.12.0/umd/react.development.js">
+    /* import React, { Component, PureComponent } from 'react' */
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.7.2/prop-types.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.11.0/umd/react-dom.development.js">
+    /* import ReactDOM from 'react-dom' */
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/7.2.2/react-redux.js">
+    /*  import ReactRedux, {Provider, useDispatch, useSelector} from 'react-redux' */
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/5.2.0/react-router-dom.js">
+    /*  import ReactRouterDOM, {BrowserRouter, Switch, Route, Redirect, Link, NavLink} from 'react-router-dom' */
+</script>
+<script src="https://unpkg.com/immer">
+    /* 불변객체 state를 조작하는 라이브러리. import immer from 'immer' */
+</script>
+<script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo, Fragment } = React;
+    function CrudContainer(props) {
+        const [items, setItems] = useState([
+            {id:1, name: "슈퍼맨", power: 100},
+            {id:2, name: "아쿠아맨", power: 300},
+            {id:3, name: "스파이더맨", power: 500},
+            {id:4, name: "배트맨", power: 30},
+        ]);
+
+        // callback 메서드 작성. callback 메서드는 부모의 공유 상태값을 변경하기 위해서 사용된다.
+        const callbackAdd = useCallback( (param)=>{
+            // state 변경
+            let nextId=0;
+            if(items.length > 0){
+                nextId =items.map( item=> item.id).reduce( (prev,crrnt) =>prev>=crrnt?  prev : crrnt)
+            }else{
+                nextId=0;
+            }
+            param.id =nextId +1
+            setItems([...items, param])
+        }, [items]);
+
+        const doDel = (id) =>{
+            // items 배열에서 삭제. Array.filter() 를 사용한다
+            // ...생략
+            setItems( items.filter( item => item.id !== id ) )
+        };
+        const doUp = (id)=>{
+            //100씩 증가. Array.map() 을 사용한다
+            // item.power = item.power + 100;
+            // ...생략
+            //setItems( items.map( item => item.id === id ? {...item, power:(item.power + 100) } : item ) )
+            setItems( items.filter( item =>{
+                 if(item.id === id){
+                    item.power += 100
+                }
+                return item;
+            }))
+        };
+        const doDown = (id) =>{
+            // 50씩 감소.  Array.map() 을 사용한다
+            // item.power = item.power - 50;
+            // ...생략
+            setItems( items.map( item => item.id === id ? {...item, power:item.power -50 } : item ) )
+        };
+        const callbackSave = useCallback( (param) =>{
+            setItems( items.filter( item =>{
+                 if(item.id === param.id){
+                    item.name = param.name;
+                    item.power = param.power;
+                }
+                return item;
+            }))
+        },[items]);
+
+        // JSX로 화면 만들기
+        return (
+            <div>
+                <h1>Creat Read Update Delete</h1>
+                <CrudInput callbackAdd={callbackAdd} />
+                <hr/>
+                <CrudList items={items}  doDel={doDel} doUp={doUp} doDown={doDown} callbackSave={callbackSave} />
+            </div>
+        )
+    }
+
+    function CrudInput(props) {
+        // 컴포넌트의 상태값 설정
+        const inputName = useRef("");
+        const inputPower = useRef("");
+        // callback 메서드 작성. callback 메서드는 부모의 공유 상태값을 변경하기 위해서 사용된다.
+        const callback = useCallback( (param)=>{
+            // state 변경
+        }, [/*메서드와 연관되는 상태(변수)명들을 기술*/]);
+
+        // 이벤트 핸들러 작성.
+        const handlerAdd = (event)=>{
+            // 이벤트 핸들러는 화살표 함수로 만들면 this bind()를 생략해도 된다
+            console.log(event.target);
+
+            if(!inputName.current.value){
+                 alert("이름값을 입력하세요.")
+                 event.preventDefault();
+                 inputName.current.focus()
+                 return false
+            }
+
+            //inputPower.current.value 유효성 검사
+            if(!inputPower.current.value){
+                alert("파워값을 입력하세요.")
+                event.preventDefault();
+                event.stopPropagation();
+                inputPower.current.focus()
+                return false
+            }
+            if( isNaN(Number(inputPower.current.value)) ){
+                alert("파워값을 숫자만 입력하세요.")
+                event.preventDefault();
+                event.stopPropagation();
+                inputPower.current.focus()
+            }
+            var man ={
+                name:inputName.current.value,
+                power:Number(inputPower.current.value),
+            }
+            props.callbackAdd(man)
+
+            inputName.current.value=""
+            inputPower.current.value=""
+        };
+
+        // JSX로 화면 만들기
+        return (
+            <div>
+                <div>
+                    <label htmlFor="">Name : </label>
+                    <input type="text" name="name" placeholder="이름을 입력하세요" ref={inputName} />
+                </div>
+                <div>
+                    <label htmlFor="">Power : </label>
+                    <input type="number" name="power" placeholder="숫자를 입력하세요" ref={inputPower}  />
+                </div>
+                <button type="button" onClick={handlerAdd}>Add</button>
+            </div>
+        )
+    }
+
+    function CrudList(props) {
+        // 컴포넌트의 상태값 설정
+        const [변수명, set변수명] = useState('기본값'); // 상태값이 기본타입인 경우
+        const [state, setState] = useState({ id: 0, name: '', age: 0, }); // 상태값이 참조타입 경우
+
+        // callback 메서드 작성. callback 메서드는 부모의 공유 상태값을 변경하기 위해서 사용된다.
+        const callback = useCallback( (param)=>{
+            // state 변경
+        }, [/*메서드와 연관되는 상태(변수)명들을 기술*/]);
+
+        // 이벤트 핸들러 작성.
+        const handler = (event)=>{
+            // 이벤트 핸들러는 화살표 함수로 만들면 this bind()를 생략해도 된다
+            console.log(event.target);
+        };
+
+        // JSX로 화면 만들기
+        return (
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>POWER</th>
+                        <th>CRUD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        props.items.map(item =>
+                            <CrudListItem
+                                {... props}
+                                key={item.id}
+                                item={item}
+                                doDel={props.doDel}
+                                doUp={props.doUp}
+                                doDown={props.doDown}
+                                callbackSave={props.callbackSave}
+                            />
+                        )
+                    }
+                </tbody>
+            </table>
+        )
+    }
+
+    function CrudListItem(props) {
+        const {item} = props;
+
+        const [isEditMode, setIsEditMode]= useState(false)
+        const inputName = useRef("");
+        const inputPower = useRef("");
+        // callback 메서드 작성. callback 메서드는 부모의 공유 상태값을 변경하기 위해서 사용된다.
+        const callback = useCallback( (param)=>{
+            // state 변경
+        }, [/*메서드와 연관되는 상태(변수)명들을 기술*/]);
+
+        // 이벤트 핸들러 작성.
+        const doEdit = (event)=>{
+            // 이벤트 핸들러는 화살표 함수로 만들면 this bind()를 생략해도 된다
+            console.log(event.target);
+            setIsEditMode(!isEditMode)
+        };
+        const doSave = ()=>{
+            // 이벤트 핸들러는 화살표 함수로 만들면 this bind()를 생략해도 된다
+            debugger;
+            const newItem = {
+                id:item.id,
+                name:inputName.current.value,
+                power:inputPower.current.value,
+            }
+            props.callbackSave(newItem);
+            setIsEditMode(!isEditMode)
+        };
+
+        const formView=(
+            <tr className={item.power >=300 ? "strong" : null}>
+                <td>{item.id}</td>
+                <td>{item.name}</td>
+                <td>{item.power}</td>
+                <td>
+                    <button type="button" onClick={() => props.doDel(item.id)}>Del</button>
+                    <button type="button" onClick={() => props.doUp(item.id)}>Power Up</button>
+                    <button type="button" onClick={() => props.doDown(item.id)}>Power Down</button>
+                    <button type="button" onClick={doEdit}>Edit</button>
+                </td>
+            </tr>
+        );
+        const formEdit=(
+            <tr className={item.power >=300 ? "strong" : null}>
+                <td>{item.id}</td>
+                    <td>
+                        <input
+                            type="text"
+                            name="name"
+                            ref={inputName }
+                            defaultValue={item.name}
+                        />
+                    </td>
+                    <td>
+                        <input
+                            type="number"
+                            name="power"
+                            ref={inputPower }
+                            defaultValue={item.power}
+                        />
+                    </td>
+                    <td>
+                        <button onClick={() => props.doUp(item.id)}>Power Up</button>
+                        <button onClick={() => props.doDown(item.id)}>Power Down</button>
+                        <button type="button" onClick={doSave}>Save</button>
+                    </td>
+            </tr>
+        );
+
+        // JSX로 화면 만들기
+        if(isEditMode){
+            return formEdit;
+        }else{
+            return formView;
+        }
+
+    }
+
+    ReactDOM.render(<CrudContainer />, document.getElementById("app"));
+</script>

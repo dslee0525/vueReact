@@ -162,6 +162,7 @@
         // 컴포넌트의 상태값 설정
         const [변수명, set변수명] = useState('기본값'); // 상태값이 기본타입인 경우
 
+        debugger;
         // JSX로 화면 만들기
         return (
             <div className="card">
@@ -180,7 +181,9 @@
         )
     }
     function Square(props) {
-        let style={ backgorundColor:props.color }
+
+        debugger;
+        let style={ backgroundColor:props.color }
         // JSX로 화면 만들기
         return (
             <div className="square" style={style}></div>
